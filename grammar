@@ -1,0 +1,25 @@
+--- grammar ---
+
+<expr>		:= <term>
+<term>		:= <term> ((PLUS | MINUS) <term>)*
+<factor>	:= <primary> ((STAR | FSLASH) <primary>)*
+<primary>	:= LPAREN <expr> RPAREN
+		 | <literal>
+<literal>	:= DECIMAL
+		 | BINARY
+		 | OCTAL
+		 | HEXADECIMAL
+
+--- tokens ---
+
+PLUS		:= "+"
+MINUS		:= "-"
+STAR		:= "*"
+FSLASH		:= "/"
+LPAREN		:= "("
+RPAREN		:= ")"
+DECIMAL 	:= [1-9][0-9]*
+BINARY 		:= "0b" [0-1]+
+OCTAL		:= "0" [0-7]+
+HEXADECIMAL	:= "0x" [0-9a-fA-F]+
+
