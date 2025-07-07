@@ -19,10 +19,10 @@ int color_enabled = 0;
 void print_err(const char *filename, const char *src, const char *err_msg, 
 	struct pos_t err_start, struct pos_t err_end) {
 	// check if the color is enabled
-	color_enabled = isatty(fileno(stdout));
+	color_enabled = isatty(fileno(stderr));
 
 	int src_len = strlen(src);
-	printf("%s:%d:%d: %serror%s: %s\n", filename, err_start.ln, 
+	fprintf(stderr, "%s:%d:%d: %serror%s: %s\n", filename, err_start.ln, 
 		err_start.col, RED, RESET, err_msg);
 
 	// calculate the start of the line
@@ -33,19 +33,19 @@ void print_err(const char *filename, const char *src, const char *err_msg,
 	// print the error source text
 	int i = line_start_idx;
 	int cnt = err_start.ln;
-	printf(" %d\t|\t", cnt);
+	fprintf(stderr, " %d\t|\t", cnt);
 	while (cnt <= err_end.ln && i < src_len) {
 		if (src[i] == '\n') {
 			cnt++;
 			if (cnt <= err_end.ln)
-				printf("\n %d\t>\t", cnt);
+				fprintf(stderr, "\n %d\t>\t", cnt);
 		}
 		else {
 			const char *color = (err_start.idx <= i && 
 				i <= err_end.idx ? GREEN : RESET);
-			printf("%s%c%s", color, src[i], RESET);
+			fprintf(stderr, "%s%c%s", color, src[i], RESET);
 		}
 		i++;
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 }
