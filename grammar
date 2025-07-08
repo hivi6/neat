@@ -20,6 +20,6 @@ LPAREN		:= "("
 RPAREN		:= ")"
 DECIMAL 	:= [1-9][0-9]*
 BINARY 		:= "0b" [0-1]+
-OCTAL		:= "0" [0-7]+
+OCTAL		:= "0" [0-7]*
 HEXADECIMAL	:= "0x" [0-9a-fA-F]+
 
