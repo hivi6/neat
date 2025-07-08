@@ -4,8 +4,8 @@
 <term>		:= <term> ((PLUS | MINUS) <term>)*
 <factor>	:= <primary> ((STAR | FSLASH) <primary>)*
 <primary>	:= LPAREN <expr> RPAREN
-		 | <literal>
-<literal>	:= DECIMAL
+		 | <int-literal>
+<int-literal>	:= DECIMAL
 		 | BINARY
 		 | OCTAL
 		 | HEXADECIMAL
