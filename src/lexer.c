@@ -188,7 +188,7 @@ int lexer_tokenize_number(struct lexer_t *self, struct pos_t start,
 			pos_next(&self->cur, ch);
 		}
 
-		// check if after 0b there is bits
+		// check if after 0b there are bits
 		if (self->cur.idx-start.idx <= 2) {
 			char msg[256];
 			sprintf(msg, "invalid binary number, "
@@ -208,6 +208,34 @@ int lexer_tokenize_number(struct lexer_t *self, struct pos_t start,
 
 		// set the final type of the lexical
 		type = TT_BINARY;
+	}
+	// parse hexadecimal number
+	else if (first == '0' && second == 'x') {
+		pos_next(&self->cur, second);
+
+		// get the rest of the hexadecimal number
+		while (self->cur.idx < self->len) {
+			char ch = self->src[self->cur.idx];
+
+			// check if hexadecimal digit
+			if (('0' <= ch && ch <= '9') || 
+				('a' <= tolower(ch) && tolower(ch) <= 'f')) {
+				pos_next(&self->cur, ch);
+			}
+			else break;
+		}
+
+		// check if after 0x there are digits
+		if (self->cur.idx-start.idx <= 2) {
+			char msg[256];
+			sprintf(msg, "invalid hexadecimal number, "
+				"expected hexadecimal digits after 0x");	
+			return lexer_set_err(self, LEXER_UNEXPECTED_ERR, msg, 
+				start, self->cur);
+		}
+
+		// set the final type of the lexical
+		type = TT_HEXADECIMAL;
 	}
 	// parse octal numbers
 	else if (first == '0') {
