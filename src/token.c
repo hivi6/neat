@@ -13,6 +13,7 @@ void token_print(struct token_t *self) {
 		"TT_RPAREN",
 		"TT_DECIMAL",
 		"TT_OCTAL",
+		"TT_BINARY",
 	};
 
 	printf("{ type: %s, filename: %s, lexical: '", TOKEN_NAMES[self->type], 

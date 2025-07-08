@@ -37,7 +37,7 @@ int lexer_set_err(struct lexer_t *self, int type, const char *msg,
 	struct pos_t start, struct pos_t end);
 
 /**
- * Tokenize any kind of integers
+ * Tokenize any kind of number
  *
  * params:
  * 	self	self pointer
@@ -47,7 +47,7 @@ int lexer_set_err(struct lexer_t *self, int type, const char *msg,
  * returns:
  * 	lexer error code, if any
  */
-int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start, 
+int lexer_tokenize_number(struct lexer_t *self, struct pos_t start, 
 	struct token_t *dest);
 
 // ========================================
@@ -103,9 +103,9 @@ int lexer_next(struct lexer_t *self, struct token_t *dest) {
 		res = (struct token_t){.src=self->src, .type=type, .start=start, 
 			.end=self->cur, .filename=self->filename};
 	}
-	// tokenize integers
+	// tokenize numbers
 	else if ('0' <= first && first <= '9') {
-		int err = lexer_tokenize_ints(self, start, &res);
+		int err = lexer_tokenize_number(self, start, &res);
 		if (err) return err;
 	}
 	// for unexpected characters
@@ -156,10 +156,11 @@ int lexer_set_err(struct lexer_t *self, int type, const char *msg,
 	return type;
 }
 
-int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start, 
+int lexer_tokenize_number(struct lexer_t *self, struct pos_t start, 
 	struct token_t *dest) {
 
 	char first = self->src[start.idx];
+	char second = self->src[self->cur.idx];
 	int type = TT_DECIMAL;
 	
 	// parse decimal numbers
@@ -168,7 +169,45 @@ int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start,
 			isdigit(self->src[self->cur.idx])) {
 			pos_next(&self->cur, self->src[self->cur.idx]);
 		}
+
+		// set the final type of the lexical
 		type = TT_DECIMAL;
+	}
+	// parse binary numbers
+	else if (first == '0' && second == 'b') {
+		pos_next(&self->cur, second);
+
+		int valid = 1;
+		// get the rest of the binary number
+		while (self->cur.idx < self->len && 
+			isdigit(self->src[self->cur.idx])) {
+			char ch = self->src[self->cur.idx];
+			if (ch > '1') {
+				valid = 0;
+			}
+			pos_next(&self->cur, ch);
+		}
+
+		// check if after 0b there is bits
+		if (self->cur.idx-start.idx <= 2) {
+			char msg[256];
+			sprintf(msg, "invalid binary number, "
+				"expected 0 or 1 after 0b");	
+			return lexer_set_err(self, LEXER_UNEXPECTED_ERR, msg, 
+				start, self->cur);
+		}
+
+		// check if the final number is valid
+		if (!valid) {
+			char msg[256];
+			sprintf(msg, "invalid binary number, "
+				"cannot have digits other than 0 or 1");
+			return lexer_set_err(self, LEXER_UNEXPECTED_ERR, msg, 
+				start, self->cur);
+		}
+
+		// set the final type of the lexical
+		type = TT_BINARY;
 	}
 	// parse octal numbers
 	else if (first == '0') {
@@ -181,6 +220,8 @@ int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start,
 			}
 			pos_next(&self->cur, ch);
 		}
+
+		// check if the number is valid
 		if (!valid) {
 			char msg[256];
 			sprintf(msg, "invalid octal number, "
@@ -188,8 +229,9 @@ int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start,
 			return lexer_set_err(self, LEXER_UNEXPECTED_ERR, msg, 
 				start, self->cur);
 		}
-		type = TT_OCTAL;
 
+		// set the final type of the lexical
+		type = TT_OCTAL;
 	}
 	// unexpected characters
 	else {
@@ -199,6 +241,7 @@ int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start,
 			self->cur);
 	}
 
+	// set resulting token
 	*dest = (struct token_t){.src=self->src, .type=type, 
 		.start=start, .end=self->cur, .filename=self->filename};
 
