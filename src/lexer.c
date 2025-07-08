@@ -29,10 +29,26 @@ void lexer_free_err(struct lexer_t *self);
  * 	msg	message for the error
  * 	start	start of the error (included)
  *	end	end of the error (excluded)
+ *
+ * returns:
+ * 	lexer error code, if any
  */
 int lexer_set_err(struct lexer_t *self, int type, const char *msg, 
 	struct pos_t start, struct pos_t end);
 
+/**
+ * Tokenize any kind of integers
+ *
+ * params:
+ * 	self	self pointer
+ * 	start 	start position of the token
+ * 	dest	where token is set
+ *
+ * returns:
+ * 	lexer error code, if any
+ */
+int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start, 
+	struct token_t *dest);
 
 // ========================================
 // lexer.h definition
@@ -87,14 +103,10 @@ int lexer_next(struct lexer_t *self, struct token_t *dest) {
 		res = (struct token_t){.src=self->src, .type=type, .start=start, 
 			.end=self->cur, .filename=self->filename};
 	}
-	// check for decimal numbers
-	else if ('1' <= first && first <= '9') {
-		while (self->cur.idx < self->len && 
-			isdigit(self->src[self->cur.idx]))
-			pos_next(&self->cur, self->src[self->cur.idx]);
-	
-		res = (struct token_t){.src=self->src, .type=TT_DECIMAL, 
-			.start=start, .end=self->cur, .filename=self->filename};
+	// tokenize integers
+	else if ('0' <= first && first <= '9') {
+		int err = lexer_tokenize_ints(self, start, &res);
+		if (err) return err;
 	}
 	// for unexpected characters
 	else {
@@ -142,4 +154,53 @@ int lexer_set_err(struct lexer_t *self, int type, const char *msg,
 	self->err_end = end;
 
 	return type;
+}
+
+int lexer_tokenize_ints(struct lexer_t *self, struct pos_t start, 
+	struct token_t *dest) {
+
+	char first = self->src[start.idx];
+	int type = TT_DECIMAL;
+	
+	// parse decimal numbers
+	if ('1' <= first && first <= '9') {
+		while (self->cur.idx < self->len && 
+			isdigit(self->src[self->cur.idx])) {
+			pos_next(&self->cur, self->src[self->cur.idx]);
+		}
+		type = TT_DECIMAL;
+	}
+	// parse octal numbers
+	else if (first == '0') {
+		int valid = 1;
+		while (self->cur.idx < self->len && 
+			isdigit(self->src[self->cur.idx])) {
+			char ch = self->src[self->cur.idx];
+			if (ch > '7') {
+				valid = 0;
+			}
+			pos_next(&self->cur, ch);
+		}
+		if (!valid) {
+			char msg[256];
+			sprintf(msg, "invalid octal number, "
+				"cannot have 8 and 9 as digits");
+			return lexer_set_err(self, LEXER_UNEXPECTED_ERR, msg, 
+				start, self->cur);
+		}
+		type = TT_OCTAL;
+
+	}
+	// unexpected characters
+	else {
+		char msg[256];
+		sprintf(msg, "unexpected character '%c'", first);
+		return lexer_set_err(self, LEXER_UNEXPECTED_ERR, msg, start, 
+			self->cur);
+	}
+
+	*dest = (struct token_t){.src=self->src, .type=type, 
+		.start=start, .end=self->cur, .filename=self->filename};
+
+	return LEXER_NO_ERR;
 }

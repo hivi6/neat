@@ -14,7 +14,8 @@ enum {
 	TT_FSLASH,	// /
 	TT_LPAREN,	// (
 	TT_RPAREN,	// )
-	TT_DECIMAL	// [1-9][0-9]*
+	TT_DECIMAL,	// [1-9][0-9]*
+	TT_OCTAL,	// 0 [0-7]*
 };
 
 // ========================================
