@@ -4,7 +4,7 @@
 #include "lexer.h"
 
 int main() {
-	const char *src = "0 01293\n 4(56 ++--//** 78)9";
+	const char *src = "123\n 4(56 ++--//** 78)9";
 
 	struct lexer_t lexer;
 	struct token_t token;
