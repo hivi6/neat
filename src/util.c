@@ -42,7 +42,7 @@ void print_err(const char *filename, const char *src, const char *err_msg,
 		}
 		else {
 			const char *color = (err_start.idx <= i && 
-				i <= err_end.idx ? GREEN : RESET);
+				i < err_end.idx ? GREEN : RESET);
 			fprintf(stderr, "%s%c%s", color, src[i], RESET);
 		}
 		i++;
