@@ -25,19 +25,21 @@ enum {
  * 	cap		capacity of the tokens array
  * 	sz		size of the tokens array
  * 	tokens		array containing all the tokens (OWNED)
+ * 	cur		current token index while parsing
  * 	err_type	type of error, if occured
  * 	err_msg		any error message with parsing (OWNED)
- * 	err_start	start token of the error
- * 	err_end		end token of the error
+ * 	err_start	start position of the error
+ * 	err_end		end position of the error
  */
 struct parser_t {
 	int cap, sz;
 	struct token_t *tokens;
+	int cur;
 
 	int err_type;
 	char *err_msg;
-	struct token_t err_start;
-	struct token_t err_end;
+	struct pos_t err_start;
+	struct pos_t err_end;
 };
 
 /**
