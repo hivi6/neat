@@ -3,6 +3,8 @@
 
 #include "ast.h"
 
+#define AST_MAX_DEPTH 1024
+
 // ========================================
 // helper function declaration
 // ========================================
@@ -14,7 +16,7 @@
  * 	ast	printing ast
  * 	indent	how much indentation for each line
  */
-void ast_print_helper(struct ast_t *ast, int indent);
+void ast_print_helper(struct ast_t *ast, int indent, char last[]);
 
 /**
  * Print the token with the given indentations
@@ -24,7 +26,7 @@ void ast_print_helper(struct ast_t *ast, int indent);
  * 	token 	printing token
  * 	indent	how much indentation for each line
  */
-void ast_print_token(const char *label, struct token_t token, int indent);
+void ast_print_token(const char *label, struct token_t token, int indent, char last[]);
 
 // ========================================
 // ast.h definition
@@ -92,38 +94,54 @@ void ast_free(struct ast_t *ast) {
 
 void ast_print(struct ast_t *ast) {
 	printf("PROGRAM: %s\n", ast->start.filename);
-	ast_print_helper(ast, 0);
+	char last[AST_MAX_DEPTH] = {};
+	last[0] = 1;
+	ast_print_helper(ast, 0, last);
 }
 
 // ========================================
 // helper function definition
 // ========================================
 
-void ast_print_helper(struct ast_t *ast, int indent) {
+void ast_print_helper(struct ast_t *ast, int depth, char last[]) {
+	for (int i = 0; i < depth; i++) {
+		if (i < AST_MAX_DEPTH && last[i]) printf("    ");
+		else printf("|   ");
+	}
+
+	last[depth+1] = 0;
 	switch (ast->type) {
 	case AST_LITERAL:
-		printf("%*s+- LITERAL\n", indent, "");
-		ast_print_token("TOKEN", ast->value.literal.token, indent+4);
+		printf("+- LITERAL\n");
+		last[depth+1] = 1;
+		ast_print_token("TOKEN", ast->value.literal.token, depth+1, last);
 		break;
 
 	case AST_GROUP:
-		printf("%*s+- GROUP\n", indent, "");
-		ast_print_token("LPAREN", ast->value.group.lparen, indent+4);
-		ast_print_helper(ast->value.group.expr, indent+4);
-		ast_print_token("RPAREN", ast->value.group.rparen, indent+4);
+		printf("+- GROUP\n");
+		ast_print_token("LPAREN", ast->value.group.lparen, depth+1, last);
+		ast_print_helper(ast->value.group.expr, depth+1, last);
+		last[depth+1] = 1;
+		ast_print_token("RPAREN", ast->value.group.rparen, depth+1, last);
 		break;
 	
 	case AST_BINARY:
-		printf("%*s+- BINARY\n", indent, "");
-		ast_print_helper(ast->value.binary.left, indent+4);
-		ast_print_token("OP", ast->value.binary.op, indent+4);
-		ast_print_helper(ast->value.binary.right, indent+4);
+		printf("+- BINARY\n");
+		ast_print_helper(ast->value.binary.left, depth+1, last);
+		ast_print_token("OP", ast->value.binary.op, depth+1, last);
+		last[depth+1] = 1;
+		ast_print_helper(ast->value.binary.right, depth+1, last);
 		break;
 	}
 }
 
-void ast_print_token(const char *label, struct token_t token, int indent) {
-	printf("%*s+- %s ", indent, "", label);
+void ast_print_token(const char *label, struct token_t token, int depth, char last[]) {
+	for (int i = 0; i < depth; i++) {
+		if (i < AST_MAX_DEPTH && last[i]) printf("    ");
+		else printf("|   ");
+	}
+
+	printf("+- %s ", label);
 	token_print(&token);
 	printf("\n");
 }
