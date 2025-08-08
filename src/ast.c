@@ -91,7 +91,7 @@ void ast_free(struct ast_t *ast) {
 }
 
 void ast_print(struct ast_t *ast) {
-	printf("PROGRAM\n");
+	printf("PROGRAM: %s\n", ast->start.filename);
 	ast_print_helper(ast, 0);
 }
 
