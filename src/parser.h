@@ -76,4 +76,12 @@ void parser_parse(struct parser_t *self, struct ast_t **dest);
  */
 void parser_free(struct parser_t *self);
 
+/**
+ * Print the current error of the parser, if any
+ *
+ * params:
+ * 	self	self pointer
+ */
+void parser_print_err(struct parser_t *self);
+
 #endif // PARSER_H

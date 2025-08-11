@@ -93,6 +93,11 @@ void ast_free(struct ast_t *ast) {
 }
 
 void ast_print(struct ast_t *ast) {
+	if (ast == NULL) {
+		printf("<NULL> No ast generated\n");
+		return;
+	}
+
 	printf("PROGRAM: %s\n", ast->start.filename);
 	char last[AST_MAX_DEPTH] = {};
 	last[0] = 1;
