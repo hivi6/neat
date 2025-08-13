@@ -13,6 +13,51 @@ void usage() {
 	);
 }
 
+int to_int(struct token_t token) {
+	int base = 2, start = 0;
+	switch (token.type) {
+	case TT_BINARY: base = 2; start = 2; break;
+	case TT_OCTAL: base = 8; start = 1; break;
+	case TT_DECIMAL: base = 10; start = 0; break;
+	case TT_HEXADECIMAL: base = 16; start = 2; break;
+	}
+
+	int value = 0;
+	for (int i = token.start.idx + start; i < token.end.idx; i++) {
+		char ch = token.src[i];
+		int temp = 0;
+		if ('0' <= ch && ch <= '9')
+			temp = ch - '0';
+		else {
+			if ('a' <= ch && ch <= 'f') temp = 10 + (ch - 'a');
+			else temp = 10 + (ch - 'A');
+		}
+		value = value * base + temp;
+	}
+	return value;
+}
+
+int walk(struct ast_t *ast) {
+	switch (ast->type) {
+	case AST_LITERAL:
+		return to_int(ast->value.literal.token);
+	case AST_GROUP:
+		return walk(ast->value.group.expr);
+	case AST_BINARY: {
+			int left = walk(ast->value.binary.left);
+			int right = walk(ast->value.binary.right);
+			switch (ast->value.binary.op.type) {
+			case TT_PLUS: return left + right;
+			case TT_MINUS: return left - right;
+			case TT_STAR: return left * right;
+			case TT_FSLASH: return left / right;
+			}
+		}
+		break;
+	}
+	return -1;
+}
+
 int main(int argc, char **argv) {
 	if (argc != 2) {
 		usage();
@@ -92,7 +137,7 @@ int main(int argc, char **argv) {
 	}
 
 	// print the ast
-	ast_print(ast);
+	fprintf(stdout, "Output: %d\n", walk(ast));
 
 	// free stuffs
 	ast_free(ast);
